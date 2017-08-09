@@ -1,0 +1,16 @@
+{
+    "files.associations": {
+        "dense": "cpp",
+        "cmath": "cpp",
+        "complex": "cpp",
+        "xcomplex": "cpp",
+        "iostream": "cpp",
+        "initializer_list": "cpp",
+        "vector": "cpp",
+        "xstring": "cpp",
+        "xutility": "cpp",
+        "core": "cpp",
+        "ios": "cpp",
+        "geometry": "cpp"
+    }
+}

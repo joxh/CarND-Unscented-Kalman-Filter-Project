@@ -11,6 +11,8 @@
         "xutility": "cpp",
         "core": "cpp",
         "ios": "cpp",
-        "geometry": "cpp"
+        "geometry": "cpp",
+        "iosfwd": "cpp",
+        "xlocbuf": "cpp"
     }
 }

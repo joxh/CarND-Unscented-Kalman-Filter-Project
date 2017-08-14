@@ -181,7 +181,7 @@ void UKF::Prediction(double delta_t) {
   MatrixXd A = P_aug.llt().matrixL();
   double A_prefactor = sqrt(lambda_+n_aug_);
   MatrixXd Xsig_aug = MatrixXd(n_aug_, 2 * n_aug_ + 1);
-  Xsig_aug.colwise() += x_;
+  Xsig_aug.colwise() += x_aug;
   Xsig_aug.block(0,1,n_aug_,n_aug_) += A*A_prefactor;
   Xsig_aug.block(0,n_aug_+1,n_aug_,n_aug_) -= A*A_prefactor;
 

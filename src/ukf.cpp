@@ -86,47 +86,42 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
 
   ///* state vector: [pos1 pos2 vel_abs yaw_angle yaw_rate] in SI units and rad
 
-  ///* state covariance matrix
-  MatrixXd P_;
 
-  ///* predicted sigma points matrix
-  MatrixXd Xsig_pred_;
-
-  if(meas_package.sensor_type_ == MeasurementPackage::RADAR){
-          /**
-    Convert radar from polar to cartesian coordinates and initialize state.
-    */
-    float ro_meas = meas_package.raw_measurements_(0);
-    float theta_meas = meas_package.raw_measurements_(1);
-    float ro_dot = meas_package.raw_measurements_(2);
-    x_est = ro_meas*cos(theta_meas);
-    y_est =  ro_meas*sin(theta_meas);
-    x_ << x_est, y_est, 0, 0, 0;
-    //Errors adding in quadrature:
-    double var_x_init = pow(std_radr_*cos(theta_meas), 2) + 
-                  pow(ro_meas*sin(theta_meas)*std_radphi_, 2);
-    double var_y_init = pow(std_radr_*sin(theta_meas), 2) + 
-                  pow(ro_meas*cos(theta_meas)*std_radphi_, 2);
-    P_ << var_x_init, 0, 0, 0, 0,
-      0, var_y_init, 0, 0, 0,
-      0, 0, 1000, 0, 0,
-      0, 0, 0, 1000, 0,
-      0, 0, 0, 0, 1000;
-  }
-  else if (meas_package.sensor_type_ == MeasurementPackage::LASER){
-    //
-    x_est = meas_package.raw_measurements_[0];
-    y_est = meas_package.raw_measurements_[1];
-    x_ << x_est, y_est, 0, 0, 0;
-    P_ << (std_laspx_ * std_laspx_), 0, 0, 0, 0, 
-          0, (std_laspy_ * std_laspy_), 0, 0, 0,
-          0, 0, 1000, 0, 0,
-          0, 0, 0, 1000, 0,
-          0, 0, 0, 0, 1000;
-  }
-  previous_timestamp_ = meas_package.timestamp_;
-  is_initialized_ = true;
-  return;
+    if(meas_package.sensor_type_ == MeasurementPackage::RADAR){
+            /**
+      Convert radar from polar to cartesian coordinates and initialize state.
+      */
+      float ro_meas = meas_package.raw_measurements_(0);
+      float theta_meas = meas_package.raw_measurements_(1);
+      float ro_dot = meas_package.raw_measurements_(2);
+      x_est = ro_meas*cos(theta_meas);
+      y_est =  ro_meas*sin(theta_meas);
+      x_ << x_est, y_est, 0, 0, 0;
+      //Errors adding in quadrature:
+      double var_x_init = pow(std_radr_*cos(theta_meas), 2) + 
+                    pow(ro_meas*sin(theta_meas)*std_radphi_, 2);
+      double var_y_init = pow(std_radr_*sin(theta_meas), 2) + 
+                    pow(ro_meas*cos(theta_meas)*std_radphi_, 2);
+      P_ << var_x_init, 0, 0, 0, 0,
+        0, var_y_init, 0, 0, 0,
+        0, 0, 1000, 0, 0,
+        0, 0, 0, 1000, 0,
+        0, 0, 0, 0, 1000;
+    }
+    else if (meas_package.sensor_type_ == MeasurementPackage::LASER){
+      //
+      x_est = meas_package.raw_measurements_[0];
+      y_est = meas_package.raw_measurements_[1];
+      x_ << x_est, y_est, 0, 0, 0;
+      P_ << (std_laspx_ * std_laspx_), 0, 0, 0, 0, 
+            0, (std_laspy_ * std_laspy_), 0, 0, 0,
+            0, 0, 1000, 0, 0,
+            0, 0, 0, 1000, 0,
+            0, 0, 0, 0, 1000;
+    }
+    previous_timestamp_ = meas_package.timestamp_;
+    is_initialized_ = true;
+    return;
   }
 
 	float dt = (meas_package.timestamp_ - previous_timestamp_) / 1000000.0;	//dt - expressed in seconds

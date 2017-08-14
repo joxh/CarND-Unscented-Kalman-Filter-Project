@@ -24,10 +24,10 @@ UKF::UKF() {
   P_ = MatrixXd(5, 5);
 
   // Process noise standard deviation longitudinal acceleration in m/s^2
-  std_a_ = .30; // Looks off
+  std_a_ = 3.0; // Looks off
 
   // Process noise standard deviation yaw acceleration in rad/s^2
-  std_yawdd_ = .030; // Looks off
+  std_yawdd_ = 1.0; // Looks off
 
   // Laser measurement noise standard deviation position1 in m
   std_laspx_ = 0.15;
@@ -225,7 +225,7 @@ void UKF::Prediction(double delta_t) {
     Xsig_pred_.col(i) = x_old.head(n_x_) + dx.head(n_x_);
   
   }
-
+  x_.fill(0.0);
   for (int i = 0; i < n_x_; i++){
     x_(i) = Xsig_pred_.row(i).dot(weights_);
   }

@@ -27,7 +27,7 @@ UKF::UKF() {
   std_a_ = 3.0; // Looks off
 
   // Process noise standard deviation yaw acceleration in rad/s^2
-  std_yawdd_ = 1.0; // Looks off
+  std_yawdd_ = .10; // Looks off
 
   // Laser measurement noise standard deviation position1 in m
   std_laspx_ = 0.15;
@@ -104,9 +104,9 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
                     pow(ro_meas*cos(theta_meas)*std_radphi_, 2);
       P_ << var_x_init, 0, 0, 0, 0,
         0, var_y_init, 0, 0, 0,
-        0, 0, 1000, 0, 0,
-        0, 0, 0, 1000, 0,
-        0, 0, 0, 0, 1000;
+        0, 0, 5, 0, 0,
+        0, 0, 0, M_PI, 0,
+        0, 0, 0, 0, 5;
     }
     else if (meas_package.sensor_type_ == MeasurementPackage::LASER){
       //
@@ -115,9 +115,9 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
       x_ << x_est, y_est, 0, 0, 0;
       P_ << (std_laspx_ * std_laspx_), 0, 0, 0, 0, 
             0, (std_laspy_ * std_laspy_), 0, 0, 0,
-            0, 0, 1000, 0, 0,
-            0, 0, 0, 1000, 0,
-            0, 0, 0, 0, 1000;
+            0, 0,5, 0, 0,
+            0, 0, 0, M_PI/2, 0,
+            0, 0, 0, 0, 5;
     }
     previous_timestamp_ = meas_package.timestamp_;
     is_initialized_ = true;
@@ -169,7 +169,9 @@ void UKF::Prediction(double delta_t) {
   */
 
   VectorXd x_aug = VectorXd(7);
+  x_aug.fill(0.0);
   MatrixXd P_aug = MatrixXd(7, 7);
+  P_aug.fill(0.0);
 
   x_aug.head(n_x_) = x_;
 
@@ -181,12 +183,15 @@ void UKF::Prediction(double delta_t) {
   MatrixXd A = P_aug.llt().matrixL();
   double A_prefactor = sqrt(lambda_+n_aug_);
   MatrixXd Xsig_aug = MatrixXd(n_aug_, 2 * n_aug_ + 1);
+  Xsig_aug.fill(0.0);
   Xsig_aug.colwise() += x_aug;
   Xsig_aug.block(0,1,n_aug_,n_aug_) += A*A_prefactor;
   Xsig_aug.block(0,n_aug_+1,n_aug_,n_aug_) -= A*A_prefactor;
 
   VectorXd x_old = VectorXd(n_aug_);
+  x_old.fill(0.0);
   VectorXd dx = VectorXd(n_aug_);
+  dx.fill(0.0);
   double v_k;
   double psi_k;
   double psi_dot_k;
@@ -223,17 +228,19 @@ void UKF::Prediction(double delta_t) {
     //write predicted sigma points into right column
 
     Xsig_pred_.col(i) = x_old.head(n_x_) + dx.head(n_x_);
-  
+
   }
   x_.fill(0.0);
   for (int i = 0; i < n_x_; i++){
     x_(i) = Xsig_pred_.row(i).dot(weights_);
   }
+  x_(3) = fmod(x_(3) + M_PI, 2*M_PI) - M_PI;
 
   P_.fill(0.0);
   VectorXd resid = VectorXd(n_x_);
   for (int j = 0; j < 2*n_aug_+1; j++){
     resid = Xsig_pred_.col(j) - x_;
+    resid(3) = fmod(resid(3) + M_PI, 2*M_PI) - M_PI;
     P_ += weights_(j)*( resid * resid.transpose());
   }
 }
@@ -406,7 +413,7 @@ void UKF::UpdateRadar(MeasurementPackage meas_package) {
   VectorXd z_resid;
   VectorXd x_resid;
   MatrixXd Tc = MatrixXd(n_x_, n_z);
-  Tc.fill(1.0);
+  Tc.fill(0.0);
   for (int i = 0; i < n_sig_; i++){
     x_resid = (Xsig_pred_.col(i) - x_);
     z_resid = (Zsig.col(i) - z_pred).transpose();

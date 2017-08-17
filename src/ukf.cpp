@@ -1,11 +1,14 @@
 #include "ukf.h"
 #include "Eigen/Dense"
 #include <iostream>
+#include "json.hpp"
 
 using namespace std;
 using Eigen::MatrixXd;
 using Eigen::VectorXd;
 using std::vector;
+//For convenience
+using json = nlohmann::json;
 
 /**
  * Initializes Unscented Kalman filter
@@ -24,10 +27,10 @@ UKF::UKF() {
   P_ = MatrixXd(5, 5);
 
   // Process noise standard deviation longitudinal acceleration in m/s^2
-  std_a_ = 3.0; // Looks off
+  std_a_ = 5.0; // Looks off
 
   // Process noise standard deviation yaw acceleration in rad/s^2
-  std_yawdd_ = .10; // Looks off
+  std_yawdd_ = 3.0; // Looks off
 
   // Laser measurement noise standard deviation position1 in m
   std_laspx_ = 0.15;
@@ -84,6 +87,32 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
     float x_est;
     float y_est;
 
+    double std_a_init;
+    double std_yawdd_init;
+    double P22_init;
+    double P33_init;
+    double P44_init;
+
+    ifstream json_init_file("params/init.json");
+    json json_init;
+    json_init_file >> json_init;
+    if (json_init["use_json_init_file"]){
+      std_a_init = json_init["std_a"];
+      std_yawdd_init = json_init["std_yawdd"];
+      P22_init = json_init["P22"];
+      P33_init = json_init["P33"];
+      P44_init = json_init["P44"];
+
+    } else {
+      std_a_init = 5.0;
+      std_yawdd_init = 3.0;
+      P22_init = 5.0;
+      P33_init = 1.56;
+      P44_init = 5.0;
+    }
+    std_a_ = std_a_init;
+    std_yawdd_ = std_yawdd_init;
+
   ///* state vector: [pos1 pos2 vel_abs yaw_angle yaw_rate] in SI units and rad
 
 
@@ -103,10 +132,10 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
       double var_y_init = pow(std_radr_*sin(theta_meas), 2) + 
                     pow(ro_meas*cos(theta_meas)*std_radphi_, 2);
       P_ << var_x_init, 0, 0, 0, 0,
-        0, var_y_init, 0, 0, 0,
-        0, 0, 5, 0, 0,
-        0, 0, 0, M_PI, 0,
-        0, 0, 0, 0, 5;
+            0, var_y_init, 0, 0, 0,
+            0, 0,P22_init, 0, 0,
+            0, 0, 0, P33_init, 0,
+            0, 0, 0, 0, P44_init;
     }
     else if (meas_package.sensor_type_ == MeasurementPackage::LASER){
       //
@@ -115,9 +144,9 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
       x_ << x_est, y_est, 0, 0, 0;
       P_ << (std_laspx_ * std_laspx_), 0, 0, 0, 0, 
             0, (std_laspy_ * std_laspy_), 0, 0, 0,
-            0, 0,5, 0, 0,
-            0, 0, 0, M_PI/2, 0,
-            0, 0, 0, 0, 5;
+            0, 0,P22_init, 0, 0,
+            0, 0, 0, P33_init, 0,
+            0, 0, 0, 0, P44_init;
     }
     previous_timestamp_ = meas_package.timestamp_;
     is_initialized_ = true;

@@ -6,6 +6,7 @@
 #include <vector>
 #include <string>
 #include <fstream>
+#include "json.hpp"
 
 using Eigen::MatrixXd;
 using Eigen::VectorXd;

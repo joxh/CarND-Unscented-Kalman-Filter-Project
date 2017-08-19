@@ -1,8 +1,10 @@
 {
     "use_json_init_file": true,
     "std_a": 1.0,
-    "std_yawdd": 1.0,
-    "P22": 100.0,
-    "P33": 3.14,
-    "P44": 10.0
+    "std_yawdd": 0.5,
+    "P22": 2.0,
+    "P33": 1.0,
+    "P44": 1.0,
+    "print_radar_innovation": true,
+    "print_laser_innovation": false
 }

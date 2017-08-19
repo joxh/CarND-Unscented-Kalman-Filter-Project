@@ -74,6 +74,15 @@ public:
   ///*
   double previous_timestamp_;
 
+  //Initialization variables potentially filled by json
+  double std_a_init;
+  double std_yawdd_init;
+  double P22_init;
+  double P33_init;
+  double P44_init;
+
+  bool print_radar_innovation_;
+  bool print_laser_innovation_;
 
   /**
    * Constructor

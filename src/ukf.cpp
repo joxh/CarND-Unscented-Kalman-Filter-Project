@@ -26,12 +26,6 @@ UKF::UKF() {
   // initial covariance matrix
   P_ = MatrixXd(5, 5);
 
-  // Process noise standard deviation longitudinal acceleration in m/s^2
-  std_a_ = 5.0; // Looks off
-
-  // Process noise standard deviation yaw acceleration in rad/s^2
-  std_yawdd_ = 3.0; // Looks off
-
   // Laser measurement noise standard deviation position1 in m
   std_laspx_ = 0.15;
 
@@ -63,6 +57,38 @@ UKF::UKF() {
   weights_ = VectorXd(n_sig_);
   weights_(0) = lambda_/(lambda_ + n_aug_);
   weights_.tail(2*n_aug_).fill(0.5/(lambda_ + n_aug_));
+
+  bool there_is_a_json_init_file = false; // The build time flag for whether to use json
+  bool use_json_init_file;
+  json json_init; //This package is used in main, so I think it's okay
+  if (there_is_a_json_init_file){
+    ifstream json_init_file("params/init.json");
+    json_init_file >> json_init;
+    use_json_init_file = json_init["use_json_init_file"];
+  } else {
+    use_json_init_file = false;
+  }
+
+  if (use_json_init_file){
+    std_a_init = json_init["std_a"];
+    std_yawdd_init = json_init["std_yawdd"];
+    P22_init = json_init["P22"];
+    P33_init = json_init["P33"];
+    P44_init = json_init["P44"];
+    print_radar_innovation_ = json_init["print_radar_innovation"];
+    print_laser_innovation_ = json_init["print_laser_innovation"];
+  } else {
+    std_a_init = 1.0;
+    std_yawdd_init = 0.5;
+    P22_init = 2.0;
+    P33_init = 1.0;
+    P44_init = 1.0;
+    print_radar_innovation_ = false;
+    print_laser_innovation_ = false;
+  }
+  std_a_ = std_a_init;
+  std_yawdd_ = std_yawdd_init;
+
 }
 
 
@@ -87,31 +113,8 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
     float x_est;
     float y_est;
 
-    double std_a_init;
-    double std_yawdd_init;
-    double P22_init;
-    double P33_init;
-    double P44_init;
 
-    ifstream json_init_file("params/init.json");
-    json json_init;
-    json_init_file >> json_init;
-    if (json_init["use_json_init_file"]){
-      std_a_init = json_init["std_a"];
-      std_yawdd_init = json_init["std_yawdd"];
-      P22_init = json_init["P22"];
-      P33_init = json_init["P33"];
-      P44_init = json_init["P44"];
 
-    } else {
-      std_a_init = 5.0;
-      std_yawdd_init = 3.0;
-      P22_init = 5.0;
-      P33_init = 1.56;
-      P44_init = 5.0;
-    }
-    std_a_ = std_a_init;
-    std_yawdd_ = std_yawdd_init;
 
   ///* state vector: [pos1 pos2 vel_abs yaw_angle yaw_rate] in SI units and rad
 
@@ -263,7 +266,7 @@ void UKF::Prediction(double delta_t) {
   for (int i = 0; i < n_x_; i++){
     x_(i) = Xsig_pred_.row(i).dot(weights_);
   }
-  x_(3) = fmod(x_(3) + M_PI, 2*M_PI) - M_PI;
+  //x_(3) = fmod(x_(3) + M_PI, 2*M_PI) - M_PI;
 
   P_.fill(0.0);
   VectorXd resid = VectorXd(n_x_);
@@ -358,7 +361,9 @@ void UKF::UpdateLidar(MeasurementPackage meas_package) {
 
   //Normalized innovation squared
   double epsilon = z_resid.transpose() * S.inverse() * z_resid;
-
+  if (print_laser_innovation_){
+    cout << "Laser Innovation:\t"<< epsilon << endl;
+  }
 }
 
 /**
@@ -461,5 +466,7 @@ void UKF::UpdateRadar(MeasurementPackage meas_package) {
 
   //Normalized innovation squared
   double epsilon = z_resid.transpose() * S.inverse() * z_resid;
-
+  if (print_radar_innovation_){
+    cout << "Radar Innovation:\t"<< epsilon << endl;
+  }
 }
